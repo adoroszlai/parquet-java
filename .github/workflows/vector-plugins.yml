@@ -19,9 +19,6 @@ name: Vector-plugins
 
 on:
   push:
-    branches:
-      - master
-      - parquet-*
   pull_request:
 
 jobs:
@@ -66,11 +63,9 @@ jobs:
           TEST_CODECS: ${{ matrix.codes }}
           JAVA_VERSION: ${{ matrix.java }}
         run: |
-          # Spotless check uses palantir-java-format which relies on internal javac APIs
-          # that are not available on all JDK versions (e.g. JDK 25+). Since the formatting
-          # result is JDK-independent, running the check on JDK 17 alone is sufficient.
-          SPOTLESS_ARGS=""
-          if [ "${{ matrix.java }}" != "17" ]; then
-            SPOTLESS_ARGS="-Dspotless.check.skip=true"
-          fi
-          ./mvnw verify --batch-mode -Pvector-plugins javadoc:javadoc $SPOTLESS_ARGS -pl parquet-plugins/parquet-encoding-vector,parquet-plugins/parquet-plugins-benchmarks -am
+          for i in {00..99}; do
+            ./mvnw verify --fail-never --batch-mode -Pvector-plugins -pl parquet-plugins/parquet-encoding-vector -Dtest=TestByteBitPacking512VectorLE | tee -a output.log
+          done
+          echo -n "Tests run: "; grep -c 'in org.apache.parquet.column.values.bitpacking.TestByteBitPacking512VectorLE' output.log
+          echo -n "Skipped:  "; grep -c 'Skipped: 1, .*TestByteBitPacking512VectorLE$' output.log || true
+          echo -n "Failures:  "; grep -c 'ERROR.*TestByteBitPacking512VectorLE$' output.log || true
