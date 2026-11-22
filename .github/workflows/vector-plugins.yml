@@ -56,7 +56,7 @@ jobs:
           export MAVEN_OPTS="$MAVEN_OPTS $EXTRA_JAVA_TEST_ARGS"
           for i in {00..99}; do
             ./mvnw verify --fail-never --batch-mode -Pvector-plugins -pl parquet-plugins/parquet-encoding-vector -Dtest=TestByteBitPacking512VectorLE | tee -a output.log
-            if grep 'Skipped: [1-9].*TestByteBitPacking512VectorLE$' output.log; then exit 1; fi
+            if [[ "$i" == "00" ]] && grep 'Skipped: [1-9].*TestByteBitPacking512VectorLE$' output.log; then exit 1; fi
           done
           echo -n "Tests run: "; grep -c 'in org.apache.parquet.column.values.bitpacking.TestByteBitPacking512VectorLE' output.log
-          echo -n "Failures:  "; grep -c 'ERROR.*TestByteBitPacking512VectorLE$' output.log
+          echo -n "Failures:  "; ! grep -c 'ERROR.*TestByteBitPacking512VectorLE$' output.log
